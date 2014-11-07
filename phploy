@@ -108,11 +108,12 @@ class PHPloy
      *      --sync                            Updates the remote .revision file with the hash of the current HEAD
      *      --sync="[revision hash]"          Updates the remove .revision file with the provided hash
      *      --skip-subsubmodules              Skips the scanning of sub-submodules which is currently quite slow
+     *      --delete-remote-files=true/false  If set to true the deleted files removed will be removed from the server
      *      --debug                           Displays extra messages including git and FTP commands
      * 
      * @var array $longopts
      */
-    protected $longopts  = array('no-colors', 'help', 'list', 'rollback::', 'server:', 'sync::', 'skip-subsubmodules', 'debug', 'version');
+    protected $longopts  = array('no-colors', 'help', 'list', 'rollback::', 'server:', 'sync::', 'skip-subsubmodules', 'debug', 'version', 'delete-remote-files::');
 
     /**
      * @var bool|resource $connection
@@ -187,6 +188,12 @@ class PHPloy
      * @var int $deploymentSize
      */
     protected $deploymentSize = 0;
+
+    /**
+     * Delete remote files, defaults to true
+     * @var bool
+     */
+    protected $deleteRemoteFiles = true;
 
     /**
      * Constructor
@@ -288,6 +295,12 @@ class PHPloy
             $this->scanForSubSubmodules = false;
         }
 
+        if (isset($options['delete-remote-files'])) {
+            $this->deleteRemoteFiles = $options['delete-remote-files'] === 'true' ? true : false;
+        }
+        var_dump($options, $this->deleteRemoteFiles);
+
+        die;
         $this->repo = isset($opts['repo']) ? rtrim($opts['repo'], '/') : getcwd();
         $this->mainRepo = $this->repo;
     }
@@ -779,6 +792,10 @@ class PHPloy
 
         // todo: perhaps detect whether file is actually present, and whether delete is successful/skipped/failed
         foreach ($filesToDelete as $i => $file) {
+            if (!$this->deleteRemoteFiles) {
+                $this->output("   <yellow>Skipped $fileNo of $numberOfFiles <white>{$file}");
+                continue;
+            }
             ftp_delete($this->connection, $file);
             $fileNo = str_pad(++$fileNo, strlen($numberOfFiles), ' ', STR_PAD_LEFT);
             $this->output("   <red>removed $fileNo of $numberOfFiles <white>{$file}");
@@ -794,6 +811,10 @@ class PHPloy
                 }
 
                 foreach ($tmpFiles as $file) {
+                    if (!$this->deleteRemoteFiles) {
+                        $this->output("   <yellow>Skipped $fileNo of $numberOfFiles <white>{$file}");
+                        continue;
+                    }
                     $this->ftpDebug("Removing file $file");
                     ftp_delete($this->connection, $file);
                 }

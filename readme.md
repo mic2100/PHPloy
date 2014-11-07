@@ -142,6 +142,13 @@ If you want to set it to another previous commit revision, you just specify the 
 
     phploy --sync="your-revision-hash-here"
 
+## Server file deletion
+
+You may or may not want PHPloy to delete files on the server, this option can be toggle true/false
+
+    phploy --delete-remote-files=true/false
+    
+If set to true the files that are removed from git will be automatically removed, if set to false the files that are deleted will be left on the server.
 
 ## How it works
 
